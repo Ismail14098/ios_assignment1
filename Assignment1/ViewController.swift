@@ -23,6 +23,7 @@ class ViewController: UIViewController {
             UserDefaults().set(true, forKey: "setup")
             UserDefaults().setValue(0, forKey: "count")
         }
+        UserDefaults().setValue(0, forKey: "count")
         
         // Get all current filled tasks
         updateTasks()
@@ -64,7 +65,36 @@ extension ViewController: UITableViewDelegate {
         let vc = storyboard?.instantiateViewController(identifier: "task") as! TaskViewController
         vc.title = "New Task"
         vc.task = tasks[indexPath.row]
+        vc.id = indexPath.row
+        vc.update = {
+            DispatchQueue.main.async {
+                self.updateTasks()
+            }
+        }
         navigationController?.pushViewController(vc, animated: true)
+    }
+    
+    func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+        return true
+    }
+    
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete {
+            let count = UserDefaults().value(forKey: "count") as! Int
+            let newCount = count - 1
+            let currentPosition = indexPath.row
+            let currentPos = currentPosition + 1
+            UserDefaults().setValue(newCount, forKey: "count")
+            UserDefaults().setValue(nil, forKey: "task_\(currentPos)") //if delete 0'el task_1 5el count=5
+            if currentPosition != count-1 {
+                for x in currentPos+1...count {
+                    let taskTemp = UserDefaults().value(forKey: "task_\(x)") as? String //task_2
+                    let temp = x - 1
+                    UserDefaults().setValue(taskTemp, forKey: "task_\(temp)") //task_1
+                }
+            }
+            updateTasks()
+        }
     }
 }
 
@@ -80,3 +110,5 @@ extension ViewController: UITableViewDataSource{
     }
     
 }
+
+
